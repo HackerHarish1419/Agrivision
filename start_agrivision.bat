@@ -1,4 +1,5 @@
 @echo off
+setlocal EnableDelayedExpansion
 color 0A
 echo ===================================================
 echo     AgriVisionAI - Hackathon Setup ^& Launcher
@@ -13,33 +14,32 @@ set "ONNX_MODEL_PATH=%~dp0models\agrivision_efficientnet_b0.onnx"
 echo [SYS] Bound architecture dynamically to: %AGRIVISION_ROOT%
 echo.
 
-if exist ".env" goto :skip_env_setup
+if not exist ".env" (
     echo ===================================================
     echo       [INITIAL SETUP DETECTED]
     echo ===================================================
     echo Providing a Groq API Key enables the AI Recovery Engine.
     echo You can get a free key at: https://console.groq.com/keys
     echo.
-    
+
     set /p "USER_GROQ_KEY=Paste your GROQ_API_KEY: "
-    set /p "USER_BLUR_THRESH=Set Blur Threshold (Press Enter for Default 100.0): "
-    
-    if "%USER_BLUR_THRESH%"=="" set "USER_BLUR_THRESH=100.0"
+    set /p "USER_BLUR_THRESH=Set Blur Threshold (Press Enter for Default 80): "
+
+    if "!USER_BLUR_THRESH!"=="" set "USER_BLUR_THRESH=80"
 
     echo.
     echo Generating .env configuration...
-    echo GROQ_API_KEY=%USER_GROQ_KEY%> .env
-    echo GROQ_MODEL=llama-3.3-70b-versatile>> .env
-    echo MODEL_PATH=models/best_model.pth>> .env
-    echo CLASS_NAMES_PATH=models/class_names.json>> .env
-    echo BLUR_THRESHOLD=%USER_BLUR_THRESH%>> .env
-    echo CONFIDENCE_THRESHOLD=0.60>> .env
 
-    echo [OK] .env file fully configured!
+    python -c "import sys; key='!USER_GROQ_KEY!'; thresh='!USER_BLUR_THRESH!'; content='GROQ_API_KEY='+key+'\nGROQ_MODEL=llama-3.3-70b-versatile\nMODEL_PATH=models/best_model.pth\nCLASS_NAMES_PATH=models/class_names.json\nBLUR_THRESHOLD='+thresh+'\nCONFIDENCE_THRESHOLD=0.60\n'; open('.env','w').write(content); print('[OK] .env file successfully configured!')"
+
+    if errorlevel 1 (
+        echo [ERROR] Failed to write .env file. Please create it manually.
+        pause
+        exit /b 1
+    )
     echo ===================================================
     echo.
-
-:skip_env_setup
+)
 
 :: 1. Backend Setup
 echo [1/4] Checking Python Virtual Environment...
@@ -83,7 +83,7 @@ echo Starting FastAPI Backend in a new window...
 start "AgriVisionAI Backend" cmd /k "cd .. & venv\Scripts\activate & set IN_BAT=1 & set PT_MODEL_PATH=%PT_MODEL_PATH% & set ONNX_MODEL_PATH=%ONNX_MODEL_PATH% & python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload"
 
 echo Starting React Frontend in a new window...
-start "AgriVisionAI Frontend" cmd /k "cd /d %~dp0frontend & npm run dev"
+start "AgriVisionAI Frontend" cmd /k "npm run dev"
 
 echo.
 echo ===================================================
