@@ -15,30 +15,12 @@ echo [SYS] Bound architecture dynamically to: %AGRIVISION_ROOT%
 echo.
 
 if not exist ".env" (
-    echo ===================================================
-    echo       [INITIAL SETUP DETECTED]
-    echo ===================================================
-    echo Providing a Groq API Key enables the AI Recovery Engine.
-    echo You can get a free key at: https://console.groq.com/keys
-    echo.
-
-    set /p "USER_GROQ_KEY=Paste your GROQ_API_KEY: "
-    set /p "USER_BLUR_THRESH=Set Blur Threshold (Press Enter for Default 80): "
-
-    if "!USER_BLUR_THRESH!"=="" set "USER_BLUR_THRESH=80"
-
-    echo.
-    echo Generating .env configuration...
-
-    python -c "import sys; key='!USER_GROQ_KEY!'; thresh='!USER_BLUR_THRESH!'; content='GROQ_API_KEY='+key+'\nGROQ_MODEL=llama-3.3-70b-versatile\nMODEL_PATH=models/best_model.pth\nCLASS_NAMES_PATH=models/class_names.json\nBLUR_THRESHOLD='+thresh+'\nCONFIDENCE_THRESHOLD=0.60\n'; open('.env','w').write(content); print('[OK] .env file successfully configured!')"
-
+    python setup_env.py
     if errorlevel 1 (
-        echo [ERROR] Failed to write .env file. Please create it manually.
+        echo [ERROR] Setup failed. Please create .env manually.
         pause
         exit /b 1
     )
-    echo ===================================================
-    echo.
 )
 
 :: 1. Backend Setup
