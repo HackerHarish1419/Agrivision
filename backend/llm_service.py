@@ -31,32 +31,30 @@ class LLMService:
 
     def _build_prompt(self, crop: str, disease: str, confidence: float) -> str:
         """Build structured prompt for the LLM."""
-        return f"""You are an expert agricultural pathologist and crop disease specialist.
+        return f"""You are an expert agricultural pathologist. Your goal is to give fast, undeniable, highly-specific advice. 
+DO NOT write long paragraphs. Your answers must be incredibly concise, actionable, and punchy.
 
-A farmer has submitted a leaf image from their field. The AI vision model has analyzed the image and detected the following:
-
-- **Crop:** {crop}
+A farmer submitted a {crop} leaf image. The AI Vision core detected:
 - **Detected Disease:** {disease}
-- **Detection Confidence:** {confidence:.1%}
+- **Confidence:** {confidence:.1%}
 
-Based on this diagnosis, provide a comprehensive recovery and treatment plan. Your response MUST be valid JSON with exactly these fields:
+Provide a fast recovery plan. Your response MUST be valid JSON with EXACTLY these fields:
 
 {{
-  "disease_summary": "A 2-3 sentence summary explaining what this disease is, how it affects the crop, and its typical cause (pathogen, environmental conditions, etc.)",
-  "recovery_steps": ["Step 1: ...", "Step 2: ...", "Step 3: ..."],
-  "organic_treatment": ["Organic option 1 with application details", "Organic option 2 with application details"],
-  "chemical_treatment": ["Chemical 1 with dosage and frequency", "Chemical 2 with dosage and frequency"],
-  "time_to_recovery": "Estimated recovery timeline (e.g., '2-4 weeks with proper treatment')",
-  "preventive_measures": ["Preventive measure 1", "Preventive measure 2", "Preventive measure 3"],
+  "disease_summary": "A punchy 1-2 sentence maximum summary of what this disease is and its root cause.",
+  "recovery_steps": ["Step 1: [Action in <10 words]", "Step 2: [Action in <10 words]", "Step 3: [Action in <10 words]"],
+  "organic_treatment": ["Specific organic fungicide name & dosage", "Alternative organic spray"],
+  "chemical_treatment": ["EXACT chemical name (e.g., Mancozeb 75% WP) + dosage", "Alternative chemical + frequency"],
+  "time_to_recovery": "E.g., '2-3 weeks'",
+  "preventive_measures": ["Short preventive measure 1", "Short preventive measure 2"],
   "severity": "low OR medium OR high"
 }}
 
-IMPORTANT:
-- Be specific to {crop} and {disease} — do NOT give generic advice
-- Include actual chemical names, dosages, and application frequencies
-- Recovery steps should be in chronological order of priority
-- Severity should reflect how damaging this disease is to yield if untreated
-- Respond with ONLY the JSON object, no markdown, no explanation outside the JSON"""
+CRITICAL RULES:
+- Be hyper-specific to {disease} in {crop}.
+- Keep every single string/array item under 15 words. DO NOT babble.
+- Name ACTUAL chemical compounds and ACTUAL dosages. Do not say "consult a local store".
+- Respond ONLY with the raw JSON object, no markdown codeblocks, no text before or after."""
 
     def _parse_response(self, text: str) -> Dict:
         """Parse LLM response, handling potential formatting issues."""
