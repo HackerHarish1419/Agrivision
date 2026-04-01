@@ -151,6 +151,7 @@ function App() {
         setRecommendationData(data.recommendation);
       } else {
         console.error('Recommendation failed:', data.error);
+        setError(`LLM Recommendation Failed: ${data.error}`);
       }
     } catch (err) {
       console.error('Failed to fetch recommendation:', err);

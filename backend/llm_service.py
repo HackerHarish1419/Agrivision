@@ -7,6 +7,7 @@ All config from environment variables — nothing hardcoded.
 import os
 import json
 import re
+import httpx
 from dotenv import load_dotenv
 from typing import Optional, Dict
 
@@ -18,22 +19,15 @@ class LLMService:
 
     def __init__(self):
         self.api_key = os.getenv("GROQ_API_KEY", "")
-        self.model = os.getenv("GROQ_MODEL", "llama3-70b-8192")
+        self.model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
         self.client = None
         self.configured = False
 
         if self.api_key and self.api_key != "your_groq_api_key_here":
-            try:
-                from groq import Groq
-                self.client = Groq(api_key=self.api_key)
-                self.configured = True
-                print(f"✅ Groq LLM configured (model: {self.model})")
-            except ImportError:
-                print("⚠️  Groq package not installed. Run: pip install groq")
-            except Exception as e:
-                print(f"⚠️  Groq initialization error: {e}")
+            self.configured = True
+            print(f"✅ Groq API configured (model: {self.model})")
         else:
-            print("⚠️  GROQ_API_KEY not set in .env — LLM recommendations will be unavailable")
+            print("⚠️  API_KEY not set in .env — LLM recommendations will be unavailable")
 
     def _build_prompt(self, crop: str, disease: str, confidence: float) -> str:
         """Build structured prompt for the LLM."""
@@ -131,25 +125,37 @@ IMPORTANT:
         try:
             prompt = self._build_prompt(crop, disease, confidence)
 
-            chat_completion = self.client.chat.completions.create(
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are an expert agricultural pathologist. Always respond with valid JSON only."
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json"
                     },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                model=self.model,
-                temperature=0.3,
-                max_tokens=1500,
-                top_p=0.9,
-            )
+                    json={
+                        "model": self.model,
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "You are an expert agricultural pathologist. Always respond with valid JSON only."
+                            },
+                            {
+                                "role": "user",
+                                "content": prompt
+                            }
+                        ],
+                        "temperature": 0.3,
+                        "max_tokens": 1500,
+                    },
+                    timeout=30.0
+                )
 
-            response_text = chat_completion.choices[0].message.content.strip()
-            recommendation = self._parse_response(response_text)
+                if response.status_code != 200:
+                    raise Exception(f"Groq API Error {response.status_code}: {response.text}")
+
+                data = response.json()
+                response_text = data["choices"][0]["message"]["content"].strip()
+                recommendation = self._parse_response(response_text)
 
             return {
                 "success": True,
@@ -157,6 +163,7 @@ IMPORTANT:
             }
 
         except Exception as e:
+            print(f"❌ GROQ API ERROR: {type(e).__name__} - {str(e)}")
             return {
                 "success": False,
                 "error": f"LLM request failed: {str(e)}",
