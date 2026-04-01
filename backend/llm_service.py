@@ -31,30 +31,34 @@ class LLMService:
 
     def _build_prompt(self, crop: str, disease: str, confidence: float) -> str:
         """Build structured prompt for the LLM."""
-        return f"""You are an expert agricultural pathologist. Your goal is to give fast, undeniable, highly-specific advice. 
-DO NOT write long paragraphs. Your answers must be incredibly concise, actionable, and punchy.
+        return f"""You are an advanced agricultural AI system analyzing farm telemetry. 
 
-A farmer submitted a {crop} leaf image. The AI Vision core detected:
+A farmer submitted a {crop} leaf image. The vision model detected:
 - **Detected Disease:** {disease}
 - **Confidence:** {confidence:.1%}
 
-Provide a fast recovery plan. Your response MUST be valid JSON with EXACTLY these fields:
+Generate a hardcore, concise, hackathon-style tactical readout.
+Return ONLY valid JSON with EXACTLY these fields:
 
 {{
-  "disease_summary": "A punchy 1-2 sentence maximum summary of what this disease is and its root cause.",
-  "recovery_steps": ["Step 1: [Action in <10 words]", "Step 2: [Action in <10 words]", "Step 3: [Action in <10 words]"],
-  "organic_treatment": ["Specific organic fungicide name & dosage", "Alternative organic spray"],
-  "chemical_treatment": ["EXACT chemical name (e.g., Mancozeb 75% WP) + dosage", "Alternative chemical + frequency"],
-  "time_to_recovery": "E.g., '2-3 weeks'",
-  "preventive_measures": ["Short preventive measure 1", "Short preventive measure 2"],
-  "severity": "low OR medium OR high"
+  "severity": "Moderate OR Severe OR Low",
+  "location_context": "Mangalore, Karnataka, India",
+  "time_context": "Early Morning - ideal spraying window",
+  "recommendations": [
+    "1. Actionable step one",
+    "2. Actionable step two",
+    "3. Actionable step three",
+    "4. Actionable step four",
+    "5. Actionable step five"
+  ],
+  "recovery_time": "14-21 days with immediate intervention",
+  "preventive_note": "Pre-monsoon conditions in Kerala increase fungal risk - inspect weekly"
 }}
 
 CRITICAL RULES:
-- Be hyper-specific to {disease} in {crop}.
-- Keep every single string/array item under 15 words. DO NOT babble.
-- Name ACTUAL chemical compounds and ACTUAL dosages. Do not say "consult a local store".
-- Respond ONLY with the raw JSON object, no markdown codeblocks, no text before or after."""
+- The JSON keys must match exactly.
+- Make the recommendations highly technical, concise, and specific to {disease}.
+- Do not use markdown, return only the raw JSON string."""
 
     def _parse_response(self, text: str) -> Dict:
         """Parse LLM response, handling potential formatting issues."""
@@ -82,13 +86,12 @@ CRITICAL RULES:
 
         # Return raw text as summary if all parsing fails
         return {
-            "disease_summary": text[:500],
-            "recovery_steps": ["Please consult an agricultural expert for detailed steps."],
-            "organic_treatment": ["Consult local organic farming resources."],
-            "chemical_treatment": ["Consult a certified agronomist for chemical recommendations."],
-            "time_to_recovery": "Varies — seek professional assessment",
-            "preventive_measures": ["Regular crop monitoring", "Maintain field hygiene"],
-            "severity": "medium"
+            "severity": "Unknown",
+            "location_context": "Unknown Location",
+            "time_context": "Unknown Time",
+            "recommendations": ["System error parsing LLM output.", text[:200]],
+            "recovery_time": "Unknown",
+            "preventive_note": "Please consult a specialist."
         }
 
     async def get_recommendation(self, crop: str, disease: str, confidence: float) -> Dict:
@@ -105,18 +108,16 @@ CRITICAL RULES:
             return {
                 "success": True,
                 "recommendation": {
-                    "disease_summary": f"The {crop} leaf appears healthy with no visible signs of disease. Continue current maintenance practices.",
-                    "recovery_steps": ["No treatment needed — the plant appears healthy."],
-                    "organic_treatment": ["Continue regular composting and mulching schedules."],
-                    "chemical_treatment": ["No chemical treatment required for healthy plants."],
-                    "time_to_recovery": "N/A — plant is healthy",
-                    "preventive_measures": [
-                        "Maintain regular watering schedule",
-                        "Monitor weekly for early signs of disease",
-                        "Ensure proper spacing for air circulation",
-                        "Apply preventive organic fungicide if in a disease-prone area"
+                    "severity": "None",
+                    "location_context": "Mangalore, Karnataka, India",
+                    "time_context": "Current Time - Standard ops",
+                    "recommendations": [
+                        "1. No immediate action required; plant is healthy",
+                        "2. Continue standard preventive fertilization schedule",
+                        "3. Maintain regular irrigation monitoring"
                     ],
-                    "severity": "low"
+                    "recovery_time": "N/A - Healthy",
+                    "preventive_note": "Monitor bi-weekly as seasonal shifts approach"
                 }
             }
 

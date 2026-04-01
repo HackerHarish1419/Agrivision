@@ -42,13 +42,12 @@ class RecommendRequest(BaseModel):
 
 
 class LLMRecommendation(BaseModel):
-    disease_summary: str = ""
-    recovery_steps: List[str] = []
-    organic_treatment: List[str] = []
-    chemical_treatment: List[str] = []
-    time_to_recovery: str = ""
-    preventive_measures: List[str] = []
-    severity: str = "unknown"
+    severity: str
+    location_context: str
+    time_context: str
+    recommendations: List[str]
+    recovery_time: str
+    preventive_note: str = "unknown"
 
 
 class RecommendResponse(BaseModel):

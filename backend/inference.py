@@ -66,8 +66,14 @@ class ModelInference:
 
     def _load_model(self):
         """Load either ONNX (preferred for Ryzen AI) or PyTorch (.pt) model."""
-        pt_path = Path("d:/agri_Harish_M/training/agrivision_efficientnet_b0.pt")
-        onnx_path = Path("d:/agri_Harish_M/models/agrivision_efficientnet_b0.onnx")
+        # Check env variables first, fallback to relative project root paths
+        project_root = Path(__file__).parent.parent
+        
+        pt_path_str = os.getenv("PT_MODEL_PATH", str(project_root / "training" / "agrivision_efficientnet_b0.pt"))
+        onnx_path_str = os.getenv("ONNX_MODEL_PATH", str(project_root / "models" / "agrivision_efficientnet_b0.onnx"))
+        
+        pt_path = Path(pt_path_str)
+        onnx_path = Path(onnx_path_str)
         
         print("\n--- Initializing Vision Core ---")
         

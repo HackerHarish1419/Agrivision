@@ -114,9 +114,9 @@ class GuardrailEngine:
                 "message": (
                     f"Image is sharp (blur score: {laplacian_var:.1f}, threshold: {self.blur_threshold})"
                     if not is_blurry
-                    else f"⚠️ Image appears blurry (blur score: {laplacian_var:.1f}, threshold: {self.blur_threshold}). Consider recapturing."
+                    else f"⚠️ Image appears blurry (blur score: {laplacian_var:.1f}, threshold: {self.blur_threshold}). Please recapture a clearer image."
                 ),
-                "severity": "info" if not is_blurry else "warning"
+                "severity": "info" if not is_blurry else "error"
             }
         except ImportError:
             return {

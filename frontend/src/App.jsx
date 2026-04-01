@@ -400,19 +400,35 @@ function App() {
                     </div>
                   )}
 
-                  {/* Top Prediction */}
-                  {predictionData.prediction && (
+                  {/* Terminal Hacker Style Output */}
+                  {predictionData.prediction && recommendationData && (
+                    <div className="terminal-block">
+                      <div className="term-line"><span className="term-key">Crop:</span> <span className="term-val">{predictionData.prediction.crop}</span></div>
+                      <div className="term-line"><span className="term-key">Disease:</span> <span className="term-val">{predictionData.prediction.disease}</span></div>
+                      <div className="term-line"><span className="term-key">Confidence:</span> <span className="term-val">{(predictionData.prediction.confidence * 100).toFixed(0)}%</span></div>
+                      <div className="term-line"><span className="term-key">Severity:</span> <span className="term-val">{recommendationData.severity}</span></div>
+                      <div className="term-line"><span className="term-key">Location:</span> <span className="term-val">{recommendationData.location_context}</span></div>
+                      <div className="term-line"><span className="term-key">Time Context:</span> <span className="term-val">{recommendationData.time_context}</span></div>
+                      <br/>
+                      <div className="term-divider">--- AI Recommendation ---</div>
+                      <br/>
+                      {recommendationData.recommendations.map((rec, i) => (
+                        <div key={i} className="term-list-item">{rec}</div>
+                      ))}
+                      <br/>
+                      <div className="term-line"><span className="term-key-alt">Est. Recovery:</span> <span className="term-val">{recommendationData.recovery_time}</span></div>
+                      <div className="term-line"><span className="term-key-alt">Preventive Note:</span> <span className="term-val">{recommendationData.preventive_note}</span></div>
+                    </div>
+                  )}
+
+                  {/* Fallback while recommending */}
+                  {predictionData.prediction && !recommendationData && (
                     <div className="prediction-main">
                       <div className="prediction-header">
                         <div>
                           <div className="prediction-disease">{predictionData.prediction.disease}</div>
                           <div className="prediction-crop">{predictionData.prediction.crop} Pipeline</div>
                         </div>
-                        {recommendationData && (
-                          <div className={`severity-badge ${getSeverityClass(recommendationData.severity)}`}>
-                            {recommendationData.severity} Severity
-                          </div>
-                        )}
                       </div>
                       
                       <div className="confidence-section">
@@ -460,9 +476,9 @@ function App() {
           </motion.div>
         </div>
 
-        {/* Bottom Full-Width Section: LLM Recommendation */}
+        {/* Bottom Full-Width Section: LLM Recommendation Loading Only */}
         <AnimatePresence>
-          {(isRecommending || recommendationData) && (
+          {isRecommending && (
             <motion.div 
               className="recommendation-panel"
               initial={{ opacity: 0, y: 30 }}
@@ -472,58 +488,10 @@ function App() {
                 <div className="card-title">
                   <Sprout size={20} className="icon" /> Groq LLM Recovery Recommendation
                 </div>
-
-                {isRecommending ? (
-                  <div className="empty-state" style={{ padding: '20px' }}>
-                    <div className="spinner" style={{ margin: '0 auto 16px', width: '24px', height: '24px', borderColor: 'var(--accent-green)', borderTopColor: 'transparent' }}></div>
-                    <div className="empty-state-text">Consulting Ag-LLM...<br/>Generating context-aware recovery plan</div>
-                  </div>
-                ) : recommendationData ? (
-                  <div className="main-grid" style={{ marginBottom: 0 }}>
-                    {/* Left Col of Recs */}
-                    <div>
-                      <div className="rec-section">
-                        <div className="rec-section-title"><Info size={16} /> Disease Summary</div>
-                        <p className="rec-text">{recommendationData.disease_summary}</p>
-                      </div>
-
-                      <div className="rec-section">
-                        <div className="rec-section-title"><Activity size={16} /> Immediate Recovery Steps</div>
-                        <ul className="rec-list numbered">
-                          {recommendationData.recovery_steps.map((step, i) => (
-                            <li key={i}>{step}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      
-                      <div className="rec-section" style={{ marginTop: '24px' }}>
-                        <div className="time-badge">
-                          <Clock size={16} /> Time to Recovery: {recommendationData.time_to_recovery}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right Col of Recs */}
-                    <div>
-                      <div className="rec-section">
-                        <div className="rec-section-title"><Thermometer size={16} /> Treatment Options</div>
-                        <TreatmentTabs 
-                          organic={recommendationData.organic_treatment} 
-                          chemical={recommendationData.chemical_treatment} 
-                        />
-                      </div>
-
-                      <div className="rec-section">
-                        <div className="rec-section-title"><ShieldCheck size={16} /> Preventive Measures</div>
-                        <ul className="rec-list">
-                          {recommendationData.preventive_measures.map((step, i) => (
-                            <li key={i}>{step}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
+                <div className="empty-state" style={{ padding: '20px' }}>
+                  <div className="spinner" style={{ margin: '0 auto 16px', width: '24px', height: '24px', borderColor: 'var(--accent-green)', borderTopColor: 'transparent' }}></div>
+                  <div className="empty-state-text">Consulting Ag-LLM...<br/>Generating context-aware recovery plan</div>
+                </div>
               </div>
             </motion.div>
           )}

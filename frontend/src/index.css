@@ -946,3 +946,53 @@ body {
     padding: 28px;
   }
 }
+
+/* ============================================
+   Terminal Hacker Display
+   ============================================ */
+.terminal-block {
+  background-color: #0b1510;
+  border: 1px solid #1a3322;
+  border-radius: 8px;
+  padding: 24px;
+  font-family: 'Consolas', 'Fira Code', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.8;
+  color: #4ade80;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(74, 222, 128, 0.05);
+  margin-top: 16px;
+  white-space: pre-wrap;
+}
+
+.term-line {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.term-key {
+  color: #22c55e;
+  min-width: 140px;
+}
+
+.term-key-alt {
+  color: #10b981;
+  min-width: 140px;
+}
+
+.term-val {
+  color: #ecfdf5;
+  font-weight: 500;
+}
+
+.term-divider {
+  color: #f59e0b;
+  font-weight: 700;
+  margin: 16px 0;
+}
+
+.term-list-item {
+  color: #a7f3d0;
+  padding-left: 0;
+  margin-bottom: 8px;
+}
