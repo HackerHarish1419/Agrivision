@@ -29,12 +29,14 @@ if not exist ".env" (
 
     echo.
     echo Generating .env configuration...
-    echo GROQ_API_KEY=!USER_GROQ_KEY!> .env
-    echo GROQ_MODEL=llama-3.3-70b-versatile>> .env
-    echo MODEL_PATH=models/best_model.pth>> .env
-    echo CLASS_NAMES_PATH=models/class_names.json>> .env
-    echo BLUR_THRESHOLD=!USER_BLUR_THRESH!>> .env
-    echo CONFIDENCE_THRESHOLD=0.60>> .env
+    (
+        echo GROQ_API_KEY=!USER_GROQ_KEY!
+        echo GROQ_MODEL=llama-3.3-70b-versatile
+        echo MODEL_PATH=models/best_model.pth
+        echo CLASS_NAMES_PATH=models/class_names.json
+        echo BLUR_THRESHOLD=!USER_BLUR_THRESH!
+        echo CONFIDENCE_THRESHOLD=0.60
+    ) > .env
     
     echo [OK] .env file fully configured!
     echo ===================================================
@@ -83,7 +85,7 @@ echo Starting FastAPI Backend in a new window...
 start "AgriVisionAI Backend" cmd /k "cd .. & venv\Scripts\activate & set IN_BAT=1 & set PT_MODEL_PATH=%PT_MODEL_PATH% & set ONNX_MODEL_PATH=%ONNX_MODEL_PATH% & python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload"
 
 echo Starting React Frontend in a new window...
-start "AgriVisionAI Frontend" cmd /k "npm run dev"
+start "AgriVisionAI Frontend" cmd /k "cd /d %~dp0frontend & npm run dev"
 
 echo.
 echo ===================================================
