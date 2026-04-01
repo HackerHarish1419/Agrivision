@@ -8,6 +8,8 @@ import os
 import json
 import re
 import httpx
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
 from typing import Optional, Dict
 
@@ -29,21 +31,67 @@ class LLMService:
         else:
             print("⚠️  API_KEY not set in .env — LLM recommendations will be unavailable")
 
-    def _build_prompt(self, crop: str, disease: str, confidence: float) -> str:
+    def get_time_context(self, latitude: float = None, longitude: float = None) -> str:
+        """Compute farming-relevant time context from GPS coordinates."""
+        try:
+            local_time = datetime.now()  # fallback to server time
+
+            if latitude is not None and longitude is not None:
+                try:
+                    from timezonefinder import TimezoneFinder
+                    tf = TimezoneFinder()
+                    tz_name = tf.timezone_at(lat=latitude, lng=longitude)
+                    if tz_name:
+                        local_time = datetime.now(ZoneInfo(tz_name))
+                except Exception:
+                    pass  # fall back to server local time
+
+            hour = local_time.hour
+            if 5 <= hour < 8:
+                period = "Early Morning"
+                note = "ideal window for pesticide spraying — minimal wind and evaporation"
+            elif 8 <= hour < 12:
+                period = "Morning"
+                note = "good for field inspection and manual interventions"
+            elif 12 <= hour < 16:
+                period = "Afternoon"
+                note = "avoid spraying — high evaporation rate reduces efficacy"
+            elif 16 <= hour < 19:
+                period = "Late Afternoon"
+                note = "secondary optimal spraying window — reduced sun intensity"
+            elif 19 <= hour < 22:
+                period = "Evening"
+                note = "suitable for irrigation adjustments and planning"
+            else:
+                period = "Night"
+                note = "plan next-day field operations"
+
+            time_str = local_time.strftime("%I:%M %p %Z").strip()
+            return f"{period} ({time_str}) — {note}"
+        except Exception:
+            return "Unknown time context"
+
+    def _build_prompt(self, crop: str, disease: str, confidence: float,
+                       time_context: str = "Unknown", latitude: float = None, longitude: float = None) -> str:
         """Build structured prompt for the LLM."""
+        location_hint = ""
+        if latitude is not None and longitude is not None:
+            location_hint = f"\n- **GPS Coordinates:** ({latitude:.4f}, {longitude:.4f}) — identify the nearest city/region from these coordinates"
+
         return f"""You are an advanced agricultural AI system analyzing farm telemetry. 
 
 A farmer submitted a {crop} leaf image. The vision model detected:
 - **Detected Disease:** {disease}
 - **Confidence:** {confidence:.1%}
+- **Current Time Context:** {time_context}{location_hint}
 
 Generate a hardcore, concise, hackathon-style tactical readout.
 Return ONLY valid JSON with EXACTLY these fields:
 
 {{
   "severity": "Moderate OR Severe OR Low",
-  "location_context": "Mangalore, Karnataka, India",
-  "time_context": "Early Morning - ideal spraying window",
+  "location_context": "Identify the location from the GPS coordinates provided, or use Mangalore, Karnataka, India as default",
+  "time_context": "{time_context}",
   "recommendations": [
     "1. Actionable step one",
     "2. Actionable step two",
@@ -52,12 +100,15 @@ Return ONLY valid JSON with EXACTLY these fields:
     "5. Actionable step five"
   ],
   "recovery_time": "14-21 days with immediate intervention",
-  "preventive_note": "Pre-monsoon conditions in Kerala increase fungal risk - inspect weekly"
+  "preventive_note": "Region-specific preventive advice based on current climate and season"
 }}
 
 CRITICAL RULES:
 - The JSON keys must match exactly.
+- The time_context MUST be exactly: "{time_context}"
+- For location_context, use the GPS coordinates to identify the real location (city, state, country). If no GPS provided, default to Mangalore, Karnataka, India.
 - Make the recommendations highly technical, concise, and specific to {disease}.
+- Factor in the time of day and regional climate when making recommendations.
 - Do not use markdown, return only the raw JSON string."""
 
     def _parse_response(self, text: str) -> Dict:
@@ -94,7 +145,8 @@ CRITICAL RULES:
             "preventive_note": "Please consult a specialist."
         }
 
-    async def get_recommendation(self, crop: str, disease: str, confidence: float) -> Dict:
+    async def get_recommendation(self, crop: str, disease: str, confidence: float,
+                                  latitude: float = None, longitude: float = None) -> Dict:
         """Get disease recovery recommendation from LLM."""
         if not self.configured:
             return {
@@ -103,6 +155,9 @@ CRITICAL RULES:
                 "recommendation": None
             }
 
+        # Compute dynamic time context from GPS
+        time_context = self.get_time_context(latitude, longitude)
+
         # Handle healthy plants
         if "healthy" in disease.lower():
             return {
@@ -110,7 +165,7 @@ CRITICAL RULES:
                 "recommendation": {
                     "severity": "None",
                     "location_context": "Mangalore, Karnataka, India",
-                    "time_context": "Current Time - Standard ops",
+                    "time_context": time_context,
                     "recommendations": [
                         "1. No immediate action required; plant is healthy",
                         "2. Continue standard preventive fertilization schedule",
@@ -122,7 +177,7 @@ CRITICAL RULES:
             }
 
         try:
-            prompt = self._build_prompt(crop, disease, confidence)
+            prompt = self._build_prompt(crop, disease, confidence, time_context, latitude, longitude)
 
             async with httpx.AsyncClient() as client:
                 response = await client.post(

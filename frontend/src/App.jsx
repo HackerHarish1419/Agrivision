@@ -177,7 +177,9 @@ function App() {
         body: JSON.stringify({
           crop: predictedCrop,
           disease: predictedDisease,
-          confidence: confidence
+          confidence: confidence,
+          latitude: latitude ? parseFloat(latitude) : null,
+          longitude: longitude ? parseFloat(longitude) : null,
         }),
       });
       

@@ -39,6 +39,8 @@ class RecommendRequest(BaseModel):
     crop: str = Field(..., description="Crop type: Apple, Grape, or Tomato")
     disease: str = Field(..., description="Detected disease name")
     confidence: float = Field(..., ge=0, le=1, description="Prediction confidence 0-1")
+    latitude: Optional[float] = Field(None, description="GPS latitude for time context")
+    longitude: Optional[float] = Field(None, description="GPS longitude for time context")
 
 
 class LLMRecommendation(BaseModel):

@@ -178,6 +178,8 @@ async def recommend(request: RecommendRequest):
         crop=request.crop,
         disease=request.disease,
         confidence=request.confidence,
+        latitude=request.latitude,
+        longitude=request.longitude,
     )
 
     if result["success"]:
