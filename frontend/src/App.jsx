@@ -21,10 +21,12 @@ function App() {
   const [recommendationData, setRecommendationData] = useState(null);
   
   const [error, setError] = useState('');
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsFetched, setGpsFetched] = useState(false);
   const [supportedCrops, setSupportedCrops] = useState(['Apple', 'Grape', 'Tomato']);
   const fileInputRef = useRef(null);
 
-  // Health check on mount
+  // Auto-detect GPS on mount
   useEffect(() => {
     fetch(`${API_BASENAME}/api/health`)
       .then(res => res.json())
@@ -38,7 +40,40 @@ function App() {
         }
       })
       .catch(() => {});
+
+    // Silently attempt GPS on load
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setLatitude(pos.coords.latitude.toFixed(6));
+          setLongitude(pos.coords.longitude.toFixed(6));
+          setGpsFetched(true);
+        },
+        () => {} // silently ignore if denied
+      );
+    }
   }, []);
+
+  const fetchGPS = () => {
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported by your browser.');
+      return;
+    }
+    setGpsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLatitude(pos.coords.latitude.toFixed(6));
+        setLongitude(pos.coords.longitude.toFixed(6));
+        setGpsFetched(true);
+        setGpsLoading(false);
+      },
+      () => {
+        setError('GPS access denied. Please enable location permission.');
+        setGpsLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  };
 
   const handleFileChange = (e) => {
     const selected = e.target.files[0];
@@ -263,29 +298,47 @@ function App() {
               </select>
             </div>
 
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Latitude (GPS)</label>
-                <input 
-                  type="number" 
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <label className="form-label" style={{ margin: 0 }}>GPS Location</label>
+                <button
+                  onClick={fetchGPS}
+                  disabled={gpsLoading}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '5px',
+                    background: gpsFetched ? 'rgba(34,197,94,0.15)' : 'rgba(34,197,94,0.08)',
+                    border: `1px solid ${gpsFetched ? 'rgba(34,197,94,0.5)' : 'rgba(34,197,94,0.2)'}`,
+                    color: 'var(--accent-green)', borderRadius: '6px',
+                    padding: '4px 10px', fontSize: '12px', cursor: 'pointer', fontWeight: 600
+                  }}
+                >
+                  <MapPin size={12} />
+                  {gpsLoading ? 'Locating...' : gpsFetched ? '✓ Located' : 'Use My Location'}
+                </button>
+              </div>
+              <div className="form-row">
+                <input
+                  type="number"
                   step="any"
-                  className="form-input" 
-                  placeholder="e.g. 12.87"
+                  className="form-input"
+                  placeholder="Latitude"
                   value={latitude}
                   onChange={(e) => setLatitude(e.target.value)}
                 />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Longitude (GPS)</label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   step="any"
-                  className="form-input" 
-                  placeholder="e.g. 74.88"
+                  className="form-input"
+                  placeholder="Longitude"
                   value={longitude}
                   onChange={(e) => setLongitude(e.target.value)}
                 />
               </div>
+              {gpsFetched && (
+                <div style={{ fontSize: '11px', color: 'var(--accent-green)', marginTop: '4px', opacity: 0.7 }}>
+                  📍 {latitude}, {longitude}
+                </div>
+              )}
             </div>
 
             <div className="form-group" style={{ marginTop: '24px' }}>
