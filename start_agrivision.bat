@@ -14,7 +14,7 @@ set "ONNX_MODEL_PATH=%~dp0models\agrivision_efficientnet_b0.onnx"
 echo [SYS] Bound architecture dynamically to: %AGRIVISION_ROOT%
 echo.
 
-if not exist ".env" (
+if exist ".env" goto :skip_env_setup
     echo ===================================================
     echo       [INITIAL SETUP DETECTED]
     echo ===================================================
@@ -29,19 +29,18 @@ if not exist ".env" (
 
     echo.
     echo Generating .env configuration...
-    (
-        echo GROQ_API_KEY=!USER_GROQ_KEY!
-        echo GROQ_MODEL=llama-3.3-70b-versatile
-        echo MODEL_PATH=models/best_model.pth
-        echo CLASS_NAMES_PATH=models/class_names.json
-        echo BLUR_THRESHOLD=!USER_BLUR_THRESH!
-        echo CONFIDENCE_THRESHOLD=0.60
-    ) > .env
-    
+    echo GROQ_API_KEY=!USER_GROQ_KEY!> .env
+    echo GROQ_MODEL=llama-3.3-70b-versatile>> .env
+    echo MODEL_PATH=models/best_model.pth>> .env
+    echo CLASS_NAMES_PATH=models/class_names.json>> .env
+    echo BLUR_THRESHOLD=!USER_BLUR_THRESH!>> .env
+    echo CONFIDENCE_THRESHOLD=0.60>> .env
+
     echo [OK] .env file fully configured!
     echo ===================================================
     echo.
-)
+
+:skip_env_setup
 
 :: 1. Backend Setup
 echo [1/4] Checking Python Virtual Environment...
