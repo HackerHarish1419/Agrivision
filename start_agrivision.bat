@@ -1,5 +1,4 @@
 @echo off
-setlocal EnableDelayedExpansion
 color 0A
 echo ===================================================
 echo     AgriVisionAI - Hackathon Setup ^& Launcher
@@ -25,15 +24,15 @@ if exist ".env" goto :skip_env_setup
     set /p "USER_GROQ_KEY=Paste your GROQ_API_KEY: "
     set /p "USER_BLUR_THRESH=Set Blur Threshold (Press Enter for Default 100.0): "
     
-    if "!USER_BLUR_THRESH!"=="" set "USER_BLUR_THRESH=100.0"
+    if "%USER_BLUR_THRESH%"=="" set "USER_BLUR_THRESH=100.0"
 
     echo.
     echo Generating .env configuration...
-    echo GROQ_API_KEY=!USER_GROQ_KEY!> .env
+    echo GROQ_API_KEY=%USER_GROQ_KEY%> .env
     echo GROQ_MODEL=llama-3.3-70b-versatile>> .env
     echo MODEL_PATH=models/best_model.pth>> .env
     echo CLASS_NAMES_PATH=models/class_names.json>> .env
-    echo BLUR_THRESHOLD=!USER_BLUR_THRESH!>> .env
+    echo BLUR_THRESHOLD=%USER_BLUR_THRESH%>> .env
     echo CONFIDENCE_THRESHOLD=0.60>> .env
 
     echo [OK] .env file fully configured!
